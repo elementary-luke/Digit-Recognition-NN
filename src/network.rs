@@ -1,9 +1,12 @@
 use std::vec;
-use rand::Rng;
 use std::fs;
 use std::fs::DirEntry;
-use crate::rand::prelude::SliceRandom;
 use serde::{Serialize, Deserialize};
+
+use crate::rand::prelude::SliceRandom;
+use crate::layer::*;
+use crate::weight::*;
+use crate::bias::*;
 
 extern crate rand;
 
@@ -29,13 +32,15 @@ impl Network
         self.layers.push(Layer::new(number));
     }
 
+    // add weights to every neuron
+    // the number of weights per neuron in each layer is the same as the number of neurons in the previous layer
     pub fn set_up_weights(&mut self)
     {
         for i in 1..self.layers.len()
         {
             for j in 0..self.layers[i].neurons.len()
             {
-                for k in 0..self.layers[i - 1].neurons.len() // number of weights per neuron in each layer is the same as the number of neurons in the previous layer
+                for k in 0..self.layers[i - 1].neurons.len() 
                 {
                     self.layers[i].neurons[j].weights.push(Weight::new());
                     self.nweights += 1;
@@ -43,6 +48,8 @@ impl Network
             }
         }
     }
+    
+    //make sure every neuron has a bias
     pub fn set_up_biases(&mut self)
     {
         for i in 1..self.layers.len()
@@ -54,6 +61,8 @@ impl Network
             }
         }
     }
+
+    //in this case each input neuron represents a pixel in the original image
     pub fn set_input(&mut self, input: Vec<f32>)
     {
         for i in 0..self.layers[0].neurons.len()
@@ -61,6 +70,8 @@ impl Network
             self.layers[0].neurons[i].activation = input[i];
         }
     }
+
+    // from input layer top output, calculate each neurons activation by sigmoid(all weights timesed by their neuron + bias)
     pub fn compute_output(&mut self)
     {
         for i in 1..self.layers.len()
@@ -86,6 +97,7 @@ impl Network
         }
     }
 
+    // all the activations of the final layer
     pub fn get_output_activation(&mut self) -> Vec<f32>
     {
         let mut activations = vec![];
@@ -96,6 +108,7 @@ impl Network
         return activations;
     }
 
+    // cost is (the sum of the differences between the current output and what it's supposed to be) squared
     pub fn get_cost(&mut self, actual: usize) -> f32
     {
         let mut sum = 0.0;
@@ -107,7 +120,8 @@ impl Network
         return sum;
     }
 
-    pub fn get_neg_grad(&mut self, actual: usize) //-> Vec<f32>
+    //getting the negative gradient of the cost function
+    pub fn get_neg_grad(&mut self, actual: usize)
     {
         
         //set all dCdAs in network to 0
@@ -157,8 +171,6 @@ impl Network
     }
     pub fn train(&mut self, files : &mut Vec<DirEntry>, batch_size : usize)
     {
-        // TODO figure out how to use a for loop here
-
             for _i in 0..batch_size
             {
                 if files.len() == 0
@@ -207,6 +219,7 @@ impl Network
         return self.layers[self.layers.len()-1].neurons.iter().position(|x| x.activation == highest_act).unwrap();
     }
 
+    //test current network against the mnist testing images, getting an accuracy percentage and average cost
     pub fn test(&mut self) -> (usize, Vec<(String, usize)>, f32)
     {
         let paths = fs::read_dir("pngs/testing/0").unwrap()
@@ -255,75 +268,14 @@ impl Network
         // self.print_layer_activation(3);
         
     }
-
-
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct Layer
-{
-    pub neurons: Vec<Neuron>,
-}
-
-impl Layer
-{
-    pub fn new(number: usize) -> Layer
-    {
-        Layer{neurons: vec![Neuron::new(); number]}
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct Neuron
-{
-    activation: f32, // sigmoid(z)
-    z : f32, // sum of the weights * activations + biases
-    weights: Vec<Weight>, // each neuron has a weight connecting each neuron in the previous layer
-    bias: Bias,
-    dCdA : f32
-}
-
-impl Neuron
-{
-    pub fn new() -> Neuron
-    {
-        Neuron{activation: rand::thread_rng().gen_range(-1.0..1.0), z : 0.01, weights: Vec::new(), bias: Bias::new(), dCdA: 0.0}
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug)]
-pub struct Weight
-{
-    val : f32,
-    dCdW : Vec<f32>
-}
-
-impl Weight
-{
-    pub fn new() -> Weight
-    {
-        Weight {val: rand::thread_rng().gen_range(-1.0..1.0), dCdW : Vec::new()}
-    }
-}
-
-#[derive(Clone, Serialize, Deserialize, Debug)]pub struct Bias
-{
-    val : f32,
-    dCdB : Vec<f32>
-}
-
-impl Bias
-{
-    pub fn new() -> Bias
-    {
-        Bias {val: 0.01, dCdB : Vec::new()}
-    }
-}
-
+//activation function
 fn sigmoid(x: f32) -> f32 {
     1.0 / (1.0 + (-x).exp())
 }
 
+//derivative of the activation function
 fn dsigmoid(x: f32) -> f32 {
     (-x).exp() / (1.0 + (-x).exp()).powf(2.0)
 }
