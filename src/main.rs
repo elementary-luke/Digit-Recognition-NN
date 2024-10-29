@@ -93,6 +93,7 @@ async fn main()
                         .show(egui_ctx, |ui| {
                             ui.collapsing("Network", |ui| 
                             {
+                                //display current network's properties
                                 ui.label(network_name.clone());
                                 ui.collapsing("Current structure", |ui| {
                                     for i in 0..network.layers.len()
@@ -108,14 +109,13 @@ async fn main()
 
                                     for i in 0..new_net_settings.len()
                                     {
-                                        if i == 0 || i == new_net_settings.len() - 1
+                                        if i == 0 || i == new_net_settings.len() - 1 // number input and output nodes are not variable
                                         {
                                             ui.label(new_net_settings[i].to_string());
                                         }
                                         else 
                                         {
                                             ui.horizontal(|ui| {
-                                                //ui.label(new_net_settings[i].to_string());
                                                 ui.add(egui::DragValue::new(&mut new_net_settings[i]).speed(1).clamp_range(1..=3000));
             
                                                 if ui.button("delete".to_owned()).clicked()
@@ -124,7 +124,8 @@ async fn main()
                                                 }
                                             });
                                         }
-
+                                        
+                                        //add button after each layer
                                         if  i != new_net_settings.len() - 1
                                         {
                                             ui.horizontal(|ui| {
@@ -141,6 +142,7 @@ async fn main()
                                     {
                                         new_net_settings.remove(to_delete.unwrap());
                                     }
+
                                     if ui.add(egui::Button::new("Create".to_string())).clicked() 
                                     {
                                         network = Network::new();
@@ -175,6 +177,7 @@ async fn main()
                                     }
                                 }
                             });
+
                             ui.collapsing("Train", |ui| {
                                     ui.horizontal(|ui| {
                                         ui.label("batch size:");
@@ -194,6 +197,7 @@ async fn main()
                                         network_name = "Unsaved".to_owned();
                                     }
                             });
+
                             ui.collapsing("Test", |ui| {
                                 if ui.button("draw").clicked()
                                 {
