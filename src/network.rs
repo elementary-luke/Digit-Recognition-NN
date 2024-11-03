@@ -195,7 +195,7 @@ impl Network
                     for k in 0..self.layers[i - 1].neurons.len() // number of weights per neuron in each layer is the same as the number of neurons in the previous layer
                     {
                         let change : f32 = self.layers[i].neurons[j].weights[k].dCdW.iter().sum::<f32>() / self.layers[i].neurons[j].weights[k].dCdW.len() as f32; // get average nudge
-                        self.layers[i].neurons[j].weights[k].val -= change; //idrk if this is supposed t be a smaller multiple
+                        self.layers[i].neurons[j].weights[k].val -= change; //can make this a smaller multiple
                         self.layers[i].neurons[j].weights[k].dCdW.clear();
                     }
                 }
